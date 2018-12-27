@@ -1,6 +1,8 @@
 package us.bndshop.geoquiz
 
+import android.content.DialogInterface
 import android.os.Bundle
+import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
 import android.widget.Button
 import android.widget.TextView
@@ -19,6 +21,12 @@ class QuizActivity : AppCompatActivity() {
     private var correctAnswer = true
     private var question: Question? = null
     private var index = 0
+    private var totalCorrect = 0
+    private var totalIncorrect = 0
+
+    companion object {
+        private const val NUMBER_OF_QUESTIONS = 50
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,21 +42,54 @@ class QuizActivity : AppCompatActivity() {
 
         positiveButton.setOnClickListener {
             answer = true
-            //TODO add toast for incorrect or correct
         }
         negativeButton.setOnClickListener {
             answer = false
-            //TODO add toast for incorrect or correct
         }
         nextButton.setOnClickListener {
-            //            question = getQuestion(index++)
+            compareQuestion()
+            if(index < questions.size - 1) {
+                getQuestion(index++)
+                setupQuestion()
+            } else {
+                Toast.makeText(applicationContext, "No more questions in the list.", Toast.LENGTH_LONG).show()
+                gradedQuizDialog()
+                // TODO Add logic for pull to refresh
+            }
         }
         prevButton.setOnClickListener {
-            //TODO Previous Logic
+            if(index > 0) {
+                getQuestion(index--)
+                setupQuestion()
+            } else {
+                Toast.makeText(applicationContext, "First question in the list.", Toast.LENGTH_LONG).show()
+            }
         }
     }
 
-    private fun getNewQuestion(index: Int) {
+    private fun compareQuestion() {
+        if(answer == correctAnswer) {
+            totalCorrect += 1
+            Toast.makeText(applicationContext, "Correct! \n Total Correct: $totalCorrect", Toast.LENGTH_SHORT).show()
+
+        } else {
+            totalIncorrect += 1
+            Toast.makeText(applicationContext, "Incorrect! \n Total Inorrect: $totalIncorrect", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun gradedQuizDialog() {
+        val grade = (totalCorrect/NUMBER_OF_QUESTIONS) * 100
+
+        val alertDialog = AlertDialog.Builder(this)
+
+        alertDialog.setTitle("Graded Quiz")
+            .setMessage("Grade: $grade \n Correct: $totalCorrect \n Incorect: $totalIncorrect")
+            .create()
+            .show()
+    }
+
+    private fun getQuestion(index: Int) {
         question = questions[index]
     }
 
@@ -57,7 +98,7 @@ class QuizActivity : AppCompatActivity() {
         val questionDifficulty = findViewById<TextView>(R.id.quizDifficultyValue)
         val questionCategory = findViewById<TextView>(R.id.quizCategoryValue)
 
-        getNewQuestion(index)
+        getQuestion(index)
 
         correctAnswer = question!!.correctAnswer
         questionText.text = question!!.question
@@ -70,8 +111,6 @@ class QuizActivity : AppCompatActivity() {
 
         fetchQuestionsList.enqueue(
             apiCall.getCallback(
-                "Quiz",
-                "Get Questions",
                 object : ApiCallback<QuestionsList>() {
                     override fun onSuccess(t: QuestionsList) {
                         super.onSuccess(t)

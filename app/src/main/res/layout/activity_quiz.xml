@@ -5,7 +5,8 @@
         xmlns:app="http://schemas.android.com/apk/res-auto"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context=".QuizActivity">
+        tools:context=".QuizActivity"
+        >
 
 
     <TextView
@@ -14,7 +15,8 @@
             android:layout_height="wrap_content"
             android:text="@string/difficulty_text"
             android:padding="16dp"
-            android:textSize="18sp"
+            android:textColor="@color/colorPrimaryDark"
+            android:textSize="20sp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintHorizontal_bias="0.5"
             />
@@ -35,23 +37,24 @@
             android:id="@+id/quizCategoryText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:textColor="@color/colorPrimaryDark"
             android:text="@string/category_text"
             android:padding="16dp"
-            android:textSize="18sp"
+            android:textSize="20sp"
             app:layout_constraintStart_toStartOf="@id/quizDifficultyText"
             app:layout_constraintTop_toBottomOf="@id/quizDifficultyText"
             />
 
     <TextView
             android:id="@+id/quizCategoryValue"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="Animal"
             android:padding="16dp"
             android:layout_margin="16dp"
             android:textSize="16sp"
-            app:layout_constraintStart_toEndOf="@id/quizCategoryText"
-            app:layout_constraintTop_toBottomOf="@id/quizDifficultyText"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/quizCategoryText"
             />
 
 
@@ -65,7 +68,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-    />
+            />
 
 
     <Button
@@ -78,7 +81,7 @@
             app:layout_constraintTop_toBottomOf="@id/quizQuestion"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toStartOf="@id/negativeButton"
-    />
+            />
     <Button
             android:id="@+id/negativeButton"
             android:layout_width="0dp"
@@ -90,7 +93,7 @@
             app:layout_constraintTop_toBottomOf="@id/quizQuestion"
             app:layout_constraintStart_toEndOf="@id/positiveButton"
             app:layout_constraintEnd_toEndOf="parent"
-    />
+            />
 
     <Button
             android:id="@+id/nextButton"
@@ -100,7 +103,7 @@
             app:layout_constraintStart_toEndOf="@id/prevButton"
             app:layout_constraintTop_toTopOf="@id/prevButton"
             app:layout_constraintEnd_toEndOf="parent"
-    />
+            />
 
     <Button
             android:id="@+id/prevButton"
@@ -111,6 +114,7 @@
             app:layout_constraintTop_toBottomOf="@id/positiveButton"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintEnd_toStartOf="@+id/nextButton"/>
+            app:layout_constraintEnd_toStartOf="@+id/nextButton"
+            />
 
 </android.support.constraint.ConstraintLayout>

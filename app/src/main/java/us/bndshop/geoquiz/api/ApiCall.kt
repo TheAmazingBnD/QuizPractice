@@ -26,8 +26,6 @@ class ApiCall {
      * @return A callback that can be enqueued on a Retrofit call
     </T> */
     fun <T> getCallback(
-        tag: String,
-        callType: String,
         apiCallback: ApiCallback<T>
     ): Callback<T> {
         return object : Callback<T> {
