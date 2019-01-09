@@ -12,6 +12,10 @@ import us.bndshop.geoquiz.api.ApiCall
 import us.bndshop.geoquiz.api.ApiCallback
 import us.bndshop.geoquiz.api.model.Question
 import us.bndshop.geoquiz.api.model.QuestionsList
+import android.support.v4.widget.SwipeRefreshLayout
+import android.text.Html
+import kotlinx.android.synthetic.main.activity_quiz.*
+
 
 class QuizActivity : AppCompatActivity() {
 
@@ -33,6 +37,7 @@ class QuizActivity : AppCompatActivity() {
         setContentView(R.layout.activity_quiz)
         layoutInflater.inflate(R.layout.activity_quiz, null)
 
+        val swipeRefreshLayout = findViewById<SwipeRefreshLayout>(R.id.swipeRefresh)
         val positiveButton = findViewById<Button>(R.id.positiveButton)
         val negativeButton = findViewById<Button>(R.id.negativeButton)
         val nextButton = findViewById<Button>(R.id.nextButton)
@@ -40,6 +45,7 @@ class QuizActivity : AppCompatActivity() {
 
         getQuestions()
 
+        swipeRefreshLayout.setOnRefreshListener { showRefreshDialog() }
         positiveButton.setOnClickListener {
             answer = true
         }
@@ -48,17 +54,16 @@ class QuizActivity : AppCompatActivity() {
         }
         nextButton.setOnClickListener {
             compareQuestion()
-            if(index < questions.size - 1) {
+            if (index < questions.size - 1) {
                 getQuestion(index++)
                 setupQuestion()
             } else {
                 Toast.makeText(applicationContext, "No more questions in the list.", Toast.LENGTH_LONG).show()
                 gradedQuizDialog()
-                // TODO Add logic for pull to refresh
             }
         }
         prevButton.setOnClickListener {
-            if(index > 0) {
+            if (index > 0) {
                 getQuestion(index--)
                 setupQuestion()
             } else {
@@ -67,41 +72,77 @@ class QuizActivity : AppCompatActivity() {
         }
     }
 
+    private fun showRefreshDialog() {
+        val alertDialog = AlertDialog.Builder(this)
+
+        alertDialog.setTitle("Are you sure?")
+            .setMessage("Are you sure you would like to reload for new questions?")
+            .setPositiveButton("Confirm") { _, _ ->
+                getQuestions()
+                swipeRefresh.isRefreshing = true
+                resetValues()
+                getQuestions()
+            }
+            .setNegativeButton("Cancel") { dialog, _ ->
+                dialog.dismiss()
+                swipeRefresh.isRefreshing = false
+            }
+            .create()
+            .show()
+    }
+
+    private fun resetValues() {
+        questions = mutableListOf<Question>()
+        answer = false
+        correctAnswer = true
+        question = null
+        index = 0
+        totalCorrect = 0
+        totalIncorrect = 0
+    }
+
     private fun compareQuestion() {
-        if(answer == correctAnswer) {
+        if (answer == correctAnswer) {
             totalCorrect += 1
-            Toast.makeText(applicationContext, "Correct! \n Total Correct: $totalCorrect", Toast.LENGTH_SHORT).show()
+            Toast.makeText(applicationContext, "Correct! \nTotal Correct: $totalCorrect", Toast.LENGTH_SHORT).show()
 
         } else {
             totalIncorrect += 1
-            Toast.makeText(applicationContext, "Incorrect! \n Total Inorrect: $totalIncorrect", Toast.LENGTH_SHORT).show()
+            Toast.makeText(applicationContext, "Incorrect! \nTotal Inorrect: $totalIncorrect", Toast.LENGTH_SHORT)
+                .show()
         }
     }
 
     private fun gradedQuizDialog() {
-        val grade = (totalCorrect/NUMBER_OF_QUESTIONS) * 100
+        val grade = (totalCorrect * 100) / NUMBER_OF_QUESTIONS
 
         val alertDialog = AlertDialog.Builder(this)
 
         alertDialog.setTitle("Graded Quiz")
-            .setMessage("Grade: $grade \n Correct: $totalCorrect \n Incorect: $totalIncorrect")
+            .setMessage("Grade: $grade % \nCorrect: $totalCorrect \nIncorrect: $totalIncorrect")
             .create()
             .show()
     }
 
     private fun getQuestion(index: Int) {
-        question = questions[index]
+        if (swipeRefresh.isRefreshing) {
+            swipeRefresh.isRefreshing = false
+            question = questions[index]
+        } else {
+            question = questions[index]
+        }
     }
 
     private fun setupQuestion() {
         val questionText = findViewById<TextView>(R.id.quizQuestion)
         val questionDifficulty = findViewById<TextView>(R.id.quizDifficultyValue)
         val questionCategory = findViewById<TextView>(R.id.quizCategoryValue)
+        val regex = "[\\p{P}\\p{S}]\n"
 
         getQuestion(index)
 
         correctAnswer = question!!.correctAnswer
-        questionText.text = question!!.question
+        questionText.text = Html.fromHtml(question!!.question, 0)
         questionDifficulty.text = question!!.difficulty
         questionCategory.text = question!!.category
     }
