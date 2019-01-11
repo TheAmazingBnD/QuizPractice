@@ -1,7 +1,10 @@
 package us.bndshop.geoquiz
 
+import android.app.Activity
 import android.content.DialogInterface
 import android.os.Bundle
+import android.os.PersistableBundle
+import android.support.v4.app.FragmentActivity
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
 import android.widget.Button
@@ -14,11 +17,13 @@ import us.bndshop.geoquiz.api.model.Question
 import us.bndshop.geoquiz.api.model.QuestionsList
 import android.support.v4.widget.SwipeRefreshLayout
 import android.text.Html
+import android.util.Log
 import kotlinx.android.synthetic.main.activity_quiz.*
 
 
 class QuizActivity : AppCompatActivity() {
 
+    private val TAG = QuizActivity::class.java.simpleName
     private val apiCall = ApiCall()
     private var questions = mutableListOf<Question>()
     private var answer = false
@@ -72,13 +77,42 @@ class QuizActivity : AppCompatActivity() {
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+        Log.d(TAG, "onStart() called")
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Log.d(TAG, "onResume() called")
+    }
+
+    override fun onPause() {
+        super.onPause()
+        Log.d(TAG, "onPause() called")
+    }
+
+    override fun onStop() {
+        super.onStop()
+        Log.d(TAG, "onStop() called")
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.d(TAG, "onDestroy() called")
+    }
+
+    override fun onSaveInstanceState(outState: Bundle?, outPersistentState: PersistableBundle?) {
+        super.onSaveInstanceState(outState, outPersistentState)
+        Log.d(TAG, "onSavedInstanceState() called")
+    }
+
     private fun showRefreshDialog() {
         val alertDialog = AlertDialog.Builder(this)
 
         alertDialog.setTitle("Are you sure?")
             .setMessage("Are you sure you would like to reload for new questions?")
             .setPositiveButton("Confirm") { _, _ ->
-                getQuestions()
                 swipeRefresh.isRefreshing = true
                 resetValues()
                 getQuestions()
