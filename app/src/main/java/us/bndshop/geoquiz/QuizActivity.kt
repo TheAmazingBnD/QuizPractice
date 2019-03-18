@@ -1,13 +1,9 @@
 package us.bndshop.geoquiz
 
-import android.app.Activity
-import android.content.DialogInterface
 import android.os.Bundle
 import android.os.PersistableBundle
-import android.support.v4.app.FragmentActivity
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
-import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import okhttp3.ResponseBody
@@ -15,16 +11,15 @@ import us.bndshop.geoquiz.api.ApiCall
 import us.bndshop.geoquiz.api.ApiCallback
 import us.bndshop.geoquiz.api.model.Question
 import us.bndshop.geoquiz.api.model.QuestionsList
-import android.support.v4.widget.SwipeRefreshLayout
 import android.text.Html
 import android.util.Log
 import kotlinx.android.synthetic.main.activity_quiz.*
+import us.bndshop.geoquiz.api.ApiService
+import us.bndshop.geoquiz.api.RestAPIClient
 
 
 class QuizActivity : AppCompatActivity() {
 
-    private val TAG = QuizActivity::class.java.simpleName
-    private val apiCall = ApiCall()
     private var questions = mutableListOf<Question>()
     private var answer = false
     private var correctAnswer = true
@@ -33,28 +28,20 @@ class QuizActivity : AppCompatActivity() {
     private var totalCorrect = 0
     private var totalIncorrect = 0
 
-    companion object {
-        private const val NUMBER_OF_QUESTIONS = 50
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_quiz)
         layoutInflater.inflate(R.layout.activity_quiz, null)
-
-        val swipeRefreshLayout = findViewById<SwipeRefreshLayout>(R.id.swipeRefresh)
-        val positiveButton = findViewById<Button>(R.id.positiveButton)
-        val negativeButton = findViewById<Button>(R.id.negativeButton)
-        val nextButton = findViewById<Button>(R.id.nextButton)
-        val prevButton = findViewById<Button>(R.id.prevButton)
+        apiService = apiClient.getApiService()
 
         getQuestions()
 
-        swipeRefreshLayout.setOnRefreshListener { showRefreshDialog() }
-        positiveButton.setOnClickListener {
+        swipeRefresh.setOnRefreshListener { showRefreshDialog() }
+        trueButton.setOnClickListener {
             answer = true
         }
-        negativeButton.setOnClickListener {
+        falseButton.setOnClickListener {
             answer = false
         }
         nextButton.setOnClickListener {
@@ -104,6 +91,8 @@ class QuizActivity : AppCompatActivity() {
 
     override fun onSaveInstanceState(outState: Bundle?, outPersistentState: PersistableBundle?) {
         super.onSaveInstanceState(outState, outPersistentState)
+        outState?.putInt("Correct", totalCorrect)
+        outState?.putInt("Incorrect", totalIncorrect)
         Log.d(TAG, "onSavedInstanceState() called")
     }
 
@@ -126,7 +115,7 @@ class QuizActivity : AppCompatActivity() {
     }
 
     private fun resetValues() {
-        questions = mutableListOf<Question>()
+        questions = mutableListOf()
         answer = false
         correctAnswer = true
         question = null
@@ -142,7 +131,7 @@ class QuizActivity : AppCompatActivity() {
 
         } else {
             totalIncorrect += 1
-            Toast.makeText(applicationContext, "Incorrect! \nTotal Inorrect: $totalIncorrect", Toast.LENGTH_SHORT)
+            Toast.makeText(applicationContext, "Incorrect! \nTotal Incorrect: $totalIncorrect", Toast.LENGTH_SHORT)
                 .show()
         }
     }
@@ -206,4 +195,30 @@ class QuizActivity : AppCompatActivity() {
         setupQuestion()
     }
 
+
+    companion object {
+        private val TAG = QuizActivity::class.java.simpleName
+        private const val NUMBER_OF_QUESTIONS = 50
+        private val apiClient = RestAPIClient(getURL())
+        private lateinit var apiService: ApiService
+        private var instance = App()
+        private val apiCall = ApiCall()
+
+        fun getInstance(): App {
+            return instance
+        }
+
+        fun getURL(): String {
+            return "https://opentdb.com"
+        }
+
+        fun getApiClient(): RestAPIClient {
+            return apiClient
+        }
+
+        fun getApiService(): ApiService {
+            return apiService
+        }
+    }
+    
 }

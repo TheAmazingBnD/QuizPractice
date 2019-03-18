@@ -4,14 +4,16 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import us.bndshop.geoquiz.App
+import us.bndshop.geoquiz.QuizActivity
+import us.bndshop.geoquiz.QuizActivity.Companion.getApiService
 import us.bndshop.geoquiz.api.model.QuestionsList
 
 class ApiCall {
 
     private val app = App()
 
-    private fun getApiService(): ApiService {
-        return app.getInstance().getApiClient().getApiService()
+    private fun getService(): ApiService {
+        return getApiService()
     }
 
     fun getQuestions(): Call<QuestionsList> {

@@ -1,5 +1,6 @@
 package us.bndshop.geoquiz.api
 
+import android.support.annotation.VisibleForTesting
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -10,14 +11,12 @@ class RestAPIClient(var apiURL: String) {
 
     private var apiService: ApiService
     private var retrofit: Retrofit
+    private val client: OkHttpClient = OkHttpClient.Builder()
+        .readTimeout(30, TimeUnit.SECONDS)
+        .connectTimeout(30, TimeUnit.SECONDS)
+        .build()
 
     init {
-
-        val client = OkHttpClient.Builder()
-            .readTimeout(30, TimeUnit.SECONDS)
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .build()
-
 
 
         retrofit = Retrofit.Builder()
@@ -31,5 +30,10 @@ class RestAPIClient(var apiURL: String) {
 
     fun getApiService(): ApiService {
         return apiService
+    }
+
+    @VisibleForTesting
+    fun getOkHttpClient(): OkHttpClient {
+        return client
     }
 }

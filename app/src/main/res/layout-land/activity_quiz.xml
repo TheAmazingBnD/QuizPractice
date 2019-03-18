@@ -80,7 +80,7 @@
 
 
     <Button
-            android:id="@+id/positiveButton"
+            android:id="@+id/trueButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/positive_button"
@@ -90,7 +90,7 @@
             app:layout_constraintStart_toStartOf="parent"
             />
     <Button
-            android:id="@+id/negativeButton"
+            android:id="@+id/falseButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="16dp"
@@ -107,7 +107,7 @@
             android:layout_height="wrap_content"
             android:text="@string/next_button"
             app:layout_constraintStart_toStartOf="@id/prevButton"
-            app:layout_constraintEnd_toEndOf="@id/negativeButton"
+            app:layout_constraintEnd_toEndOf="@id/falseButton"
             app:layout_constraintTop_toTopOf="@id/prevButton"
             />
 
@@ -116,8 +116,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/prev_button"
-            app:layout_constraintTop_toBottomOf="@id/positiveButton"
-            app:layout_constraintStart_toStartOf="@id/positiveButton"
+            app:layout_constraintTop_toBottomOf="@id/trueButton"
+            app:layout_constraintStart_toStartOf="@id/trueButton"
             app:layout_constraintHorizontal_bias="0.7"
             app:layout_constraintEnd_toStartOf="@+id/nextButton"
             />
