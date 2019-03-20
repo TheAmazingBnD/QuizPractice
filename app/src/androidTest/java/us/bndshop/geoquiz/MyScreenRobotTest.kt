@@ -5,10 +5,10 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-class TetsingRobotTest : AbsUITest() {
+class MyScreenRobotTest : AbsUITest() {
     @Test
     fun clickTrue_AssertTrueVisible() {
-        test {
+        myScreenRobotBuilder {
             clickTrue()
             checkTextIsDisplayed("True")
             clickNext()
@@ -17,7 +17,7 @@ class TetsingRobotTest : AbsUITest() {
 
     @Test
     fun clickNextFiveTimes() {
-        test {
+        myScreenRobotBuilder {
             repeat(5) {
                 clickNext()
             }

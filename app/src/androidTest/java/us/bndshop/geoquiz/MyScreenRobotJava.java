@@ -6,7 +6,7 @@ import static us.bndshop.geoquiz.EspressoInteractionsJava.clickButton;
 import static us.bndshop.geoquiz.EspressoMatchersJava.displayedInView;
 import static us.bndshop.geoquiz.EspressoMatchersJava.textIsDisplayed;
 
-public class TestingRobotJava {
+public class MyScreenRobotJava {
     public static void clickTrue() { clickButton(R.id.trueButton); }
     public static void clickFalse() { clickButton(R.id.falseButton); }
     public static void clickNext() { clickButton(R.id.nextButton); }
