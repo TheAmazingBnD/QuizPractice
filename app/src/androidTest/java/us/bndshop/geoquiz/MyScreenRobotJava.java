@@ -7,10 +7,10 @@ import static us.bndshop.geoquiz.EspressoMatchersJava.displayedInView;
 import static us.bndshop.geoquiz.EspressoMatchersJava.textIsDisplayed;
 
 public class MyScreenRobotJava {
-    public static void clickTrue() { clickButton(R.id.trueButton); }
-    public static void clickFalse() { clickButton(R.id.falseButton); }
-    public static void clickNext() { clickButton(R.id.nextButton); }
-    public static void clickPrevious() { clickButton(R.id.prevButton); }
-    public static void checkTextIsDisplayed(String toMatch) { textIsDisplayed(toMatch); }
-    public static void checkDisplayed(@StringRes int toMatch) { displayedInView(toMatch); }
+    public MyScreenRobotJava clickTrue() { clickButton(R.id.trueButton); return this; }
+    public MyScreenRobotJava clickFalse() { clickButton(R.id.falseButton); return this; }
+    public MyScreenRobotJava clickNext() { clickButton(R.id.nextButton); return this; }
+    public MyScreenRobotJava clickPrevious() { clickButton(R.id.prevButton); return this; }
+    public MyScreenRobotJava checkTextIsDisplayed(String toMatch) { textIsDisplayed(toMatch); return this; }
+    public MyScreenRobotJava checkDisplayed(@StringRes int toMatch) { displayedInView(toMatch); return this; }
 }

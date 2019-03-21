@@ -6,17 +6,17 @@ import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
 public class MyScreenRobotTestJava extends AbsUITest {
+    MyScreenRobotJava myScreenRobotJava = new MyScreenRobotJava();
     @Test
     public void clickTrue_AssertTrueVisible() {
-        MyScreenRobotJava.clickTrue();
-        MyScreenRobotJava.checkTextIsDisplayed("True");
-        MyScreenRobotJava.clickNext();
+        MyScreenRobotJava myScreenRobotJava = new MyScreenRobotJava();
+        myScreenRobotJava.clickTrue().checkTextIsDisplayed("True").clickNext();
     }
 
     @Test
     public void clickNextFiveTimes() {
         for (int i = 0; i < 5; i++) {
-            MyScreenRobotJava.clickNext();
+            myScreenRobotJava.clickNext();
         }
     }
 }
