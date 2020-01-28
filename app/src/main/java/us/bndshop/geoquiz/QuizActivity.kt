@@ -52,6 +52,8 @@ class QuizActivity : AppCompatActivity() {
             } else {
                 Toast.makeText(applicationContext, "No more questions in the list.", Toast.LENGTH_LONG).show()
                 gradedQuizDialog()
+                resetValues()
+                getQuestions()
             }
         }
         prevButton.setOnClickListener {
@@ -157,17 +159,15 @@ class QuizActivity : AppCompatActivity() {
     }
 
     private fun setupQuestion() {
-        val questionText = findViewById<TextView>(R.id.quizQuestion)
-        val questionDifficulty = findViewById<TextView>(R.id.quizDifficultyValue)
-        val questionCategory = findViewById<TextView>(R.id.quizCategoryValue)
         val regex = "[\\p{P}\\p{S}]\n"
 
         getQuestion(index)
 
         correctAnswer = question!!.correctAnswer
-        questionText.text = Html.fromHtml(question!!.question, 0)
-        questionDifficulty.text = question!!.difficulty
-        questionCategory.text = question!!.category
+        quizQuestionNumber.text = (index + 1).toString()
+        quizQuestion.text = Html.fromHtml(question!!.question, 0)
+        quizDifficultyValue.text = question!!.difficulty
+        quizCategoryValue.text = question!!.category
     }
 
     private fun getQuestions() {
