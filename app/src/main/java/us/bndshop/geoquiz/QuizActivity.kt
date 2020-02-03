@@ -4,18 +4,21 @@ import android.os.Bundle
 import android.os.PersistableBundle
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
-import android.widget.TextView
 import android.widget.Toast
 import okhttp3.ResponseBody
-import us.bndshop.geoquiz.api.ApiCall
-import us.bndshop.geoquiz.api.ApiCallback
 import us.bndshop.geoquiz.api.model.Question
 import us.bndshop.geoquiz.api.model.QuestionsList
 import android.text.Html
 import android.util.Log
 import kotlinx.android.synthetic.main.activity_quiz.*
+import kotlinx.coroutines.*
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.HttpException
+import retrofit2.Response
 import us.bndshop.geoquiz.api.ApiService
 import us.bndshop.geoquiz.api.RestAPIClient
+import java.lang.Exception
 
 
 class QuizActivity : AppCompatActivity() {
@@ -50,7 +53,11 @@ class QuizActivity : AppCompatActivity() {
                 getQuestion(index++)
                 setupQuestion()
             } else {
-                Toast.makeText(applicationContext, "No more questions in the list.", Toast.LENGTH_LONG).show()
+                Toast.makeText(
+                    applicationContext,
+                    "No more questions in the list.",
+                    Toast.LENGTH_LONG
+                ).show()
                 gradedQuizDialog()
                 resetValues()
                 getQuestions()
@@ -61,7 +68,8 @@ class QuizActivity : AppCompatActivity() {
                 getQuestion(index--)
                 setupQuestion()
             } else {
-                Toast.makeText(applicationContext, "First question in the list.", Toast.LENGTH_LONG).show()
+                Toast.makeText(applicationContext, "First question in the list.", Toast.LENGTH_LONG)
+                    .show()
             }
         }
     }
@@ -129,11 +137,19 @@ class QuizActivity : AppCompatActivity() {
     private fun compareQuestion() {
         if (answer == correctAnswer) {
             totalCorrect += 1
-            Toast.makeText(applicationContext, "Correct! \nTotal Correct: $totalCorrect", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                applicationContext,
+                "Correct! \nTotal Correct: $totalCorrect",
+                Toast.LENGTH_SHORT
+            ).show()
 
         } else {
             totalIncorrect += 1
-            Toast.makeText(applicationContext, "Incorrect! \nTotal Incorrect: $totalIncorrect", Toast.LENGTH_SHORT)
+            Toast.makeText(
+                applicationContext,
+                "Incorrect! \nTotal Incorrect: $totalIncorrect",
+                Toast.LENGTH_SHORT
+            )
                 .show()
         }
     }
@@ -171,25 +187,51 @@ class QuizActivity : AppCompatActivity() {
     }
 
     private fun getQuestions() {
-        val fetchQuestionsList = apiCall.getQuestions()
+        val fetchQuestionsList = apiService.getQuestions()
 
         fetchQuestionsList.enqueue(
-            apiCall.getCallback(
-                object : ApiCallback<QuestionsList>() {
-                    override fun onSuccess(t: QuestionsList) {
-                        super.onSuccess(t)
-                        onFetchQuestionsSuccess(t)
+            object : Callback<QuestionsList> {
+                override fun onResponse(
+                    call: Call<QuestionsList>,
+                    response: Response<QuestionsList>
+                ) {
+                    if (response.isSuccessful) {
+                        onFetchQuestionsSuccess(response.body())
                     }
+                }
 
-                    override fun onError(errorBody: ResponseBody, code: Int) {
-                        Toast.makeText(applicationContext, "Error, item not found", Toast.LENGTH_LONG).show()
-                    }
-                })
+                override fun onFailure(call: Call<QuestionsList>, t: Throwable) {
+                    Toast.makeText(applicationContext, "Error, item not found", Toast.LENGTH_LONG)
+                        .show()
+                }
+            }
         )
+
+//        GlobalScope.launch {
+//            try {
+//                val questionsList = apiService.getQuestions()
+//                if (questionsList.isSuccessful) {
+//                    onFetchQuestionsSuccess(questionList = questionsList.body())
+//                } else {
+//                    Toast.makeText(
+//                        applicationContext,
+//                        "Error, questions not found",
+//                        Toast.LENGTH_LONG
+//                    )
+//                        .show()
+//                }
+//            } catch (e: HttpException) {
+//                Toast.makeText(applicationContext, e.message(), Toast.LENGTH_LONG)
+//                    .show()
+//            } catch (e: Throwable) {
+//                Toast.makeText(applicationContext, "Error, questions not found", Toast.LENGTH_LONG)
+//                    .show()
+//            }
+//        }
     }
 
-    private fun onFetchQuestionsSuccess(questionList: QuestionsList) {
-        questionList.results.forEach {
+    private fun onFetchQuestionsSuccess(questionList: QuestionsList?) {
+        questionList?.results?.forEach {
             questions.add(it)
         }
         setupQuestion()
@@ -202,7 +244,6 @@ class QuizActivity : AppCompatActivity() {
         private val apiClient = RestAPIClient(getURL())
         private lateinit var apiService: ApiService
         private var instance = App()
-        private val apiCall = ApiCall()
 
         fun getInstance(): App {
             return instance
@@ -220,5 +261,5 @@ class QuizActivity : AppCompatActivity() {
             return apiService
         }
     }
-    
+
 }
