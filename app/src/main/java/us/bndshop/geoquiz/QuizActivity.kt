@@ -1,21 +1,28 @@
 package us.bndshop.geoquiz
 
+import android.content.res.Configuration
 import android.os.Bundle
+import android.os.Parcelable
 import android.os.PersistableBundle
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
-import android.widget.TextView
 import android.widget.Toast
 import okhttp3.ResponseBody
-import us.bndshop.geoquiz.api.ApiCall
-import us.bndshop.geoquiz.api.ApiCallback
 import us.bndshop.geoquiz.api.model.Question
 import us.bndshop.geoquiz.api.model.QuestionsList
 import android.text.Html
 import android.util.Log
+import com.google.gson.Gson
 import kotlinx.android.synthetic.main.activity_quiz.*
+import kotlinx.coroutines.*
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.HttpException
+import retrofit2.Response
 import us.bndshop.geoquiz.api.ApiService
 import us.bndshop.geoquiz.api.RestAPIClient
+import java.io.Serializable
+import java.lang.Exception
 
 
 class QuizActivity : AppCompatActivity() {
@@ -28,40 +35,64 @@ class QuizActivity : AppCompatActivity() {
     private var totalCorrect = 0
     private var totalIncorrect = 0
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_quiz)
         layoutInflater.inflate(R.layout.activity_quiz, null)
         apiService = apiClient.getApiService()
 
-        getQuestions()
+        if (savedInstanceState != null) {
+            totalCorrect = savedInstanceState.getInt("CORRECT")
+            totalIncorrect = savedInstanceState.getInt("INCORRECT")
+            index = savedInstanceState.getInt("INDEX")
+            answer = savedInstanceState.getBoolean("ANSWER")
+            questions = savedInstanceState.getParcelableArrayList<Question>("QUESTION_LIST").toMutableList()
+            setupQuestion()
+        } else {
+            getQuestions()
+        }
 
         swipeRefresh.setOnRefreshListener { showRefreshDialog() }
+
         trueButton.setOnClickListener {
             answer = true
         }
+
         falseButton.setOnClickListener {
             answer = false
         }
+
         nextButton.setOnClickListener {
             compareQuestion()
             if (index < questions.size - 1) {
                 getQuestion(index++)
                 setupQuestion()
             } else {
-                Toast.makeText(applicationContext, "No more questions in the list.", Toast.LENGTH_LONG).show()
+                Toast.makeText(
+                    applicationContext,
+                    "No more questions in the list.",
+                    Toast.LENGTH_LONG
+                ).show()
                 gradedQuizDialog()
+                resetValues()
+                getQuestions()
             }
         }
+
         prevButton.setOnClickListener {
             if (index > 0) {
                 getQuestion(index--)
                 setupQuestion()
             } else {
-                Toast.makeText(applicationContext, "First question in the list.", Toast.LENGTH_LONG).show()
+                Toast.makeText(applicationContext, "First question in the list.", Toast.LENGTH_LONG)
+                    .show()
             }
         }
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration?) {
+        super.onConfigurationChanged(newConfig)
+        setContentView(R.layout.activity_quiz)
     }
 
     override fun onStart() {
@@ -89,11 +120,26 @@ class QuizActivity : AppCompatActivity() {
         Log.d(TAG, "onDestroy() called")
     }
 
-    override fun onSaveInstanceState(outState: Bundle?, outPersistentState: PersistableBundle?) {
-        super.onSaveInstanceState(outState, outPersistentState)
-        outState?.putInt("Correct", totalCorrect)
-        outState?.putInt("Incorrect", totalIncorrect)
+    override fun onSaveInstanceState(outState: Bundle?) {
+        super.onSaveInstanceState(outState)
+        outState?.putInt("CORRECT", totalCorrect)
+        outState?.putInt("INCORRECT", totalIncorrect)
+        outState?.putInt("INDEX", index)
+        outState?.putParcelableArrayList("QUESTION_LIST", ArrayList<Parcelable>(questions))
+        outState?.putBoolean("ANSWER", answer)
         Log.d(TAG, "onSavedInstanceState() called")
+    }
+
+    override fun onRestoreInstanceState(savedInstanceState: Bundle?) {
+        super.onRestoreInstanceState(savedInstanceState)
+        if (savedInstanceState != null) {
+            totalCorrect = savedInstanceState.getInt("CORRECT")
+            totalIncorrect = savedInstanceState.getInt("INCORRECT")
+            index = savedInstanceState.getInt("INDEX")
+            answer = savedInstanceState.getBoolean("ANSWER")
+            questions = savedInstanceState.getParcelableArrayList<Question>("QUESTION_LIST").toMutableList()
+            setupQuestion()
+        }
     }
 
     private fun showRefreshDialog() {
@@ -127,11 +173,19 @@ class QuizActivity : AppCompatActivity() {
     private fun compareQuestion() {
         if (answer == correctAnswer) {
             totalCorrect += 1
-            Toast.makeText(applicationContext, "Correct! \nTotal Correct: $totalCorrect", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                applicationContext,
+                "Correct! \nTotal Correct: $totalCorrect",
+                Toast.LENGTH_SHORT
+            ).show()
 
         } else {
             totalIncorrect += 1
-            Toast.makeText(applicationContext, "Incorrect! \nTotal Incorrect: $totalIncorrect", Toast.LENGTH_SHORT)
+            Toast.makeText(
+                applicationContext,
+                "Incorrect! \nTotal Incorrect: $totalIncorrect",
+                Toast.LENGTH_SHORT
+            )
                 .show()
         }
     }
@@ -157,39 +211,46 @@ class QuizActivity : AppCompatActivity() {
     }
 
     private fun setupQuestion() {
-        val questionText = findViewById<TextView>(R.id.quizQuestion)
-        val questionDifficulty = findViewById<TextView>(R.id.quizDifficultyValue)
-        val questionCategory = findViewById<TextView>(R.id.quizCategoryValue)
-        val regex = "[\\p{P}\\p{S}]\n"
-
         getQuestion(index)
 
         correctAnswer = question!!.correctAnswer
-        questionText.text = Html.fromHtml(question!!.question, 0)
-        questionDifficulty.text = question!!.difficulty
-        questionCategory.text = question!!.category
+        quizQuestionNumber.text = (index + 1).toString()
+        quizQuestion.text = Html.fromHtml(question!!.question, 0)
+
+        if (question!!.difficulty == "hard") {
+            quizDifficultyValue.setTextColor(getColor(R.color.red))
+        } else {
+            quizDifficultyValue.setTextColor(getColor(R.color.green))
+        }
+
+        quizDifficultyValue.text = question!!.difficulty
+        quizCategoryValue.text = question!!.category
     }
 
     private fun getQuestions() {
-        val fetchQuestionsList = apiCall.getQuestions()
+        val fetchQuestionsList = apiService.getQuestions()
 
         fetchQuestionsList.enqueue(
-            apiCall.getCallback(
-                object : ApiCallback<QuestionsList>() {
-                    override fun onSuccess(t: QuestionsList) {
-                        super.onSuccess(t)
-                        onFetchQuestionsSuccess(t)
+            object : Callback<QuestionsList> {
+                override fun onResponse(
+                    call: Call<QuestionsList>,
+                    response: Response<QuestionsList>
+                ) {
+                    if (response.isSuccessful) {
+                        onFetchQuestionsSuccess(response.body())
                     }
+                }
 
-                    override fun onError(errorBody: ResponseBody, code: Int) {
-                        Toast.makeText(applicationContext, "Error, item not found", Toast.LENGTH_LONG).show()
-                    }
-                })
+                override fun onFailure(call: Call<QuestionsList>, t: Throwable) {
+                    Toast.makeText(applicationContext, "Error, item not found", Toast.LENGTH_LONG)
+                        .show()
+                }
+            }
         )
     }
 
-    private fun onFetchQuestionsSuccess(questionList: QuestionsList) {
-        questionList.results.forEach {
+    private fun onFetchQuestionsSuccess(questionList: QuestionsList?) {
+        questionList?.results?.forEach {
             questions.add(it)
         }
         setupQuestion()
@@ -202,7 +263,6 @@ class QuizActivity : AppCompatActivity() {
         private val apiClient = RestAPIClient(getURL())
         private lateinit var apiService: ApiService
         private var instance = App()
-        private val apiCall = ApiCall()
 
         fun getInstance(): App {
             return instance
@@ -220,5 +280,5 @@ class QuizActivity : AppCompatActivity() {
             return apiService
         }
     }
-    
+
 }
