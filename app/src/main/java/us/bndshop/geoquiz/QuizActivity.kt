@@ -1,6 +1,8 @@
 package us.bndshop.geoquiz
 
+import android.content.res.Configuration
 import android.os.Bundle
+import android.os.Parcelable
 import android.os.PersistableBundle
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
@@ -10,6 +12,7 @@ import us.bndshop.geoquiz.api.model.Question
 import us.bndshop.geoquiz.api.model.QuestionsList
 import android.text.Html
 import android.util.Log
+import com.google.gson.Gson
 import kotlinx.android.synthetic.main.activity_quiz.*
 import kotlinx.coroutines.*
 import retrofit2.Call
@@ -18,6 +21,7 @@ import retrofit2.HttpException
 import retrofit2.Response
 import us.bndshop.geoquiz.api.ApiService
 import us.bndshop.geoquiz.api.RestAPIClient
+import java.io.Serializable
 import java.lang.Exception
 
 
@@ -31,22 +35,33 @@ class QuizActivity : AppCompatActivity() {
     private var totalCorrect = 0
     private var totalIncorrect = 0
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_quiz)
         layoutInflater.inflate(R.layout.activity_quiz, null)
         apiService = apiClient.getApiService()
 
-        getQuestions()
+        if (savedInstanceState != null) {
+            totalCorrect = savedInstanceState.getInt("CORRECT")
+            totalIncorrect = savedInstanceState.getInt("INCORRECT")
+            index = savedInstanceState.getInt("INDEX")
+            answer = savedInstanceState.getBoolean("ANSWER")
+            questions = savedInstanceState.getParcelableArrayList<Question>("QUESTION_LIST").toMutableList()
+            setupQuestion()
+        } else {
+            getQuestions()
+        }
 
         swipeRefresh.setOnRefreshListener { showRefreshDialog() }
+
         trueButton.setOnClickListener {
             answer = true
         }
+
         falseButton.setOnClickListener {
             answer = false
         }
+
         nextButton.setOnClickListener {
             compareQuestion()
             if (index < questions.size - 1) {
@@ -63,6 +78,7 @@ class QuizActivity : AppCompatActivity() {
                 getQuestions()
             }
         }
+
         prevButton.setOnClickListener {
             if (index > 0) {
                 getQuestion(index--)
@@ -72,6 +88,11 @@ class QuizActivity : AppCompatActivity() {
                     .show()
             }
         }
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration?) {
+        super.onConfigurationChanged(newConfig)
+        setContentView(R.layout.activity_quiz)
     }
 
     override fun onStart() {
@@ -99,11 +120,26 @@ class QuizActivity : AppCompatActivity() {
         Log.d(TAG, "onDestroy() called")
     }
 
-    override fun onSaveInstanceState(outState: Bundle?, outPersistentState: PersistableBundle?) {
-        super.onSaveInstanceState(outState, outPersistentState)
-        outState?.putInt("Correct", totalCorrect)
-        outState?.putInt("Incorrect", totalIncorrect)
+    override fun onSaveInstanceState(outState: Bundle?) {
+        super.onSaveInstanceState(outState)
+        outState?.putInt("CORRECT", totalCorrect)
+        outState?.putInt("INCORRECT", totalIncorrect)
+        outState?.putInt("INDEX", index)
+        outState?.putParcelableArrayList("QUESTION_LIST", ArrayList<Parcelable>(questions))
+        outState?.putBoolean("ANSWER", answer)
         Log.d(TAG, "onSavedInstanceState() called")
+    }
+
+    override fun onRestoreInstanceState(savedInstanceState: Bundle?) {
+        super.onRestoreInstanceState(savedInstanceState)
+        if (savedInstanceState != null) {
+            totalCorrect = savedInstanceState.getInt("CORRECT")
+            totalIncorrect = savedInstanceState.getInt("INCORRECT")
+            index = savedInstanceState.getInt("INDEX")
+            answer = savedInstanceState.getBoolean("ANSWER")
+            questions = savedInstanceState.getParcelableArrayList<Question>("QUESTION_LIST").toMutableList()
+            setupQuestion()
+        }
     }
 
     private fun showRefreshDialog() {
@@ -175,13 +211,18 @@ class QuizActivity : AppCompatActivity() {
     }
 
     private fun setupQuestion() {
-        val regex = "[\\p{P}\\p{S}]\n"
-
         getQuestion(index)
 
         correctAnswer = question!!.correctAnswer
         quizQuestionNumber.text = (index + 1).toString()
         quizQuestion.text = Html.fromHtml(question!!.question, 0)
+
+        if (question!!.difficulty == "hard") {
+            quizDifficultyValue.setTextColor(getColor(R.color.red))
+        } else {
+            quizDifficultyValue.setTextColor(getColor(R.color.green))
+        }
+
         quizDifficultyValue.text = question!!.difficulty
         quizCategoryValue.text = question!!.category
     }
@@ -206,28 +247,6 @@ class QuizActivity : AppCompatActivity() {
                 }
             }
         )
-
-//        GlobalScope.launch {
-//            try {
-//                val questionsList = apiService.getQuestions()
-//                if (questionsList.isSuccessful) {
-//                    onFetchQuestionsSuccess(questionList = questionsList.body())
-//                } else {
-//                    Toast.makeText(
-//                        applicationContext,
-//                        "Error, questions not found",
-//                        Toast.LENGTH_LONG
-//                    )
-//                        .show()
-//                }
-//            } catch (e: HttpException) {
-//                Toast.makeText(applicationContext, e.message(), Toast.LENGTH_LONG)
-//                    .show()
-//            } catch (e: Throwable) {
-//                Toast.makeText(applicationContext, "Error, questions not found", Toast.LENGTH_LONG)
-//                    .show()
-//            }
-//        }
     }
 
     private fun onFetchQuestionsSuccess(questionList: QuestionsList?) {
